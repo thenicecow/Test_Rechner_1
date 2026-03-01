@@ -1,0 +1,8 @@
+streamlit
+streamlit-authenticator
+pandas
+pyyaml
+webdav4
+fsspec
+matplotlib
+numpy
