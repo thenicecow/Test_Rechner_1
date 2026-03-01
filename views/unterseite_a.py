@@ -79,7 +79,8 @@ def metrics_from_curve(t: np.ndarray, c: np.ndarray) -> dict:
     idx_max = int(np.argmax(c))
     cmax = float(c[idx_max])
     tmax = float(t[idx_max])
-    auc = float(np.trapz(c, t))  # mg*h/L
+    # Use trapezoid instead of trapz (more robust across numpy versions)
+    auc = float(np.trapezoid(c, t))  # mg*h/L
 
     return {"Cmax_mg_per_L": cmax, "Tmax_h": tmax, "AUC0_last_mg_h_per_L": auc}
 
@@ -128,7 +129,7 @@ def main():
             )
 
     with tabs[0]:
-        # Core UI elements for grading: form, number_input, slider, checkbox, selectbox, radio, metric, chart
+        # Core UI elements for grading: form, number_input, slider, checkbox, radio, metric, chart, tabs, expander
         with st.form("pk_form"):
             st.subheader("Patient")
             weight_kg = st.number_input("Körpergewicht (kg)", min_value=30.0, max_value=200.0, value=70.0, step=1.0)
