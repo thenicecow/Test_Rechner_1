@@ -22,7 +22,6 @@ def classify_rate(rate_pct: float) -> str:
 
 
 def is_enterobacterales(organism: str) -> bool:
-    # Minimal pragmatic set for your dropdown
     return organism in {"E. coli", "Klebsiella pneumoniae"}
 
 
@@ -32,29 +31,39 @@ def main():
     tabs = st.tabs(["Rechner", "Erklärung"])
     with tabs[1]:
         with st.expander("Formel"):
-            st.markdown(
-                r"""
-\[
-\text{Resistenzrate} = \frac{\text{resistente Isolate}}{\text{Gesamtisolate}} \times 100
-\]
-"""
-            )
+            st.markdown(r"\(\text{Resistenzrate}=\frac{\text{resistent}}{\text{gesamt}}\times 100\)")
 
     with tabs[0]:
-        # --- Input ---
         with st.form("resistance_form"):
             c1, c2 = st.columns(2)
             with c1:
                 organism = st.selectbox(
-                    "Erreger",
-                    ["E. coli", "Klebsiella pneumoniae", "Staphylococcus aureus", "Pseudomonas aeruginosa", "Enterococcus faecium"],
+                    "Keim (Erreger)",
+                    [
+                        "E. coli",
+                        "Klebsiella pneumoniae",
+                        "Staphylococcus aureus",
+                        "Pseudomonas aeruginosa",
+                        "Enterococcus faecium",
+                        "Enterococcus faecalis",
+                    ],
                 )
                 antibiotic = st.selectbox(
                     "Antibiotikum",
-                    ["Ciprofloxacin", "Ceftriaxon", "Piperacillin/Tazobactam", "Meropenem (Carbapenem)", "Vancomycin"],
+                    [
+                        "Penicillin",
+                        "Ciprofloxacin",
+                        "Ceftriaxon",
+                        "Piperacillin/Tazobactam",
+                        "Meropenem (Carbapenem)",
+                        "Vancomycin",
+                    ],
                 )
             with c2:
-                period = st.selectbox("Zeitraum", ["letzter Monat", "letzte 3 Monate", "letztes Halbjahr", "letztes Jahr"])
+                period = st.selectbox(
+                    "Zeitperiode (Pflicht)",
+                    ["letzter Monat", "letzte 3 Monate", "letztes Halbjahr", "letztes Jahr"],
+                )
                 compare_prev = st.checkbox("Mit Vorperiode vergleichen", value=True)
 
             st.markdown("### Aktuelle Periode")
@@ -70,7 +79,6 @@ def main():
 
             submitted = st.form_submit_button("Berechnen")
 
-        # --- Compute + persist so chart radio works after submit ---
         if submitted:
             if resistant_now > total_now:
                 st.error("Aktuelle Periode: resistente Isolate dürfen nicht größer sein als Gesamtisolate.")
@@ -110,15 +118,33 @@ def main():
         r = st.session_state["result"]
         df = r["df"]
 
-        # --- Warning: Carbapenem resistance in Enterobacterales ---
+        # --- Warnings ---
+        # Carbapenem resistance in Enterobacterales
         if is_enterobacterales(r["organism"]) and r["antibiotic"].startswith("Meropenem") and r["resistant_now"] > 0:
             st.warning(
-                "Warnhinweis: Carbapenem-Resistenz bei Enterobacterales ist klinisch und hygienisch besonders relevant "
-                "(z. B. mögliche CPE/CRE). Abklärung/Bestätigung und Hygienemassnahmen gemäss lokalen Vorgaben prüfen."
+                "Warnhinweis: Carbapenem-Resistenz bei Enterobacterales ist besonders relevant "
+                "(mögliche CPE/CRE). Bestätigung/Abklärung und Hygienemassnahmen gemäss lokalen Vorgaben prüfen."
+            )
+
+        # MRSA hint: S. aureus + Penicillin resistance (simplified teaching rule)
+        if r["organism"] == "Staphylococcus aureus" and r["antibiotic"] == "Penicillin" and r["resistant_now"] > 0:
+            st.warning(
+                "Hinweis (didaktisch): Penicillin-Resistenz bei Staphylococcus aureus ist häufig. "
+                "MRSA wird jedoch über Methicillin/Oxacillin/Cefoxitin beurteilt (nicht Penicillin). "
+                "Für MRSA-Screening lokale Teststrategie beachten."
+            )
+
+        # VRE warning: Enterococcus + Vancomycin resistance
+        if r["organism"].startswith("Enterococcus") and r["antibiotic"] == "Vancomycin" and r["resistant_now"] > 0:
+            st.warning(
+                "Warnhinweis: Vancomycin-Resistenz bei Enterokokken ist besonders relevant (VRE). "
+                "Bestätigung/Abklärung und Hygienemassnahmen gemäss lokalen Vorgaben prüfen."
             )
 
         # --- Results ---
         st.subheader("Resultate")
+        st.markdown(f"**Keim:** {r['organism']}  \n**Antibiotikum:** {r['antibiotic']}  \n**Zeitperiode:** {r['period']}")
+
         m1, m2, m3 = st.columns(3)
         with m1:
             st.metric("Resistenzrate (aktuell)", f"{r['rate_now']:.1f}%")
@@ -140,7 +166,7 @@ def main():
             with v3:
                 st.metric("Relative Änderung", f"{delta_rel:+.1f}%")
 
-        # --- Visualization (works after submit because result is persisted) ---
+        # --- Visualization ---
         st.subheader("Visualisierung")
         chart_choice = st.radio("Diagrammtyp", ["Anteile (%)", "Absolut (n)"], horizontal=True)
 
@@ -153,7 +179,8 @@ def main():
                 df_pct[col] = (df_pct[col] / s * 100.0) if s > 0 else 0.0
             st.bar_chart(df_pct)
 
-        st.caption(f"{r['organism']} – {r['antibiotic']} ({r['period']})")
+        st.caption(f"Auswertung: {r['organism']} – {r['antibiotic']} ({r['period']})")
+
 
 if __name__ == "__main__":
     main()
