@@ -57,6 +57,19 @@ def main():
                         "Piperacillin/Tazobactam",
                         "Meropenem (Carbapenem)",
                         "Vancomycin",
+                        "Flucloxacillin",
+                        "Cefazolin",
+                        "Cefalexin",
+                        "Ampicillin-Sulbactam",
+                        "Amoxicillin-Clavulansäure",
+                        "Co-trimoxazol",
+                        "Clindamycin",
+                        "Doxycyclin",
+                        "Fusidinsäure",
+                        "Teicoplanin",
+                        "Daptomycin",
+                        "Linezolid",
+                        
                     ],
                 )
             with c2:
@@ -123,14 +136,14 @@ def main():
         if is_enterobacterales(r["organism"]) and r["antibiotic"].startswith("Meropenem") and r["resistant_now"] > 0:
             st.warning(
                 "Warnhinweis: Carbapenem-Resistenz bei Enterobacterales ist besonders relevant "
-                "(mögliche CPE/CRE). Bestätigung/Abklärung und Hygienemassnahmen gemäss lokalen Vorgaben prüfen."
+                "(mögliche CPE/CRE). Bestätigung/Abklärung und Hygienemassnahmen gemäss Spitalrichtlinien prüfen."
             )
 
         # MRSA hint: S. aureus + Penicillin resistance (simplified teaching rule)
         if r["organism"] == "Staphylococcus aureus" and r["antibiotic"] == "Penicillin" and r["resistant_now"] > 0:
             st.warning(
                 "Hinweis (didaktisch): Penicillin-Resistenz bei Staphylococcus aureus ist häufig. "
-                "MRSA wird jedoch über Methicillin/Oxacillin/Cefoxitin beurteilt (nicht Penicillin). "
+                "MRSA wird jedoch über Methicillin/Oxacillin/Cefoxitin beurteilt. Die Penicillin-Resistenz allein ist kein MRSA-Nachweis, aber könnte ein Indikator sein. "
                 "Für MRSA-Screening lokale Teststrategie beachten."
             )
 
@@ -138,7 +151,7 @@ def main():
         if r["organism"].startswith("Enterococcus") and r["antibiotic"] == "Vancomycin" and r["resistant_now"] > 0:
             st.warning(
                 "Warnhinweis: Vancomycin-Resistenz bei Enterokokken ist besonders relevant (VRE). "
-                "Bestätigung/Abklärung und Hygienemassnahmen gemäss lokalen Vorgaben prüfen."
+                "Bestätigung/Abklärung und Hygienemassnahmen gemäss Spitalrichtlinien prüfen."
             )
 
         # --- Results ---
